@@ -7,31 +7,44 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
 
-        .qr-container {
+        .qr-wrapper {
+            display: flex;
             background: #fff;
-            padding: 40px;
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 450px;
+            overflow: hidden;
+            max-width: 900px;
             width: 100%;
         }
 
-        .qr-preview {
+        .qr-form {
+            flex: 1;
+            padding: 40px;
+            background: #ffffff;
+        }
+
+        .qr-display {
+            flex: 1;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 15px;
-            background-color: #f9f9f9;
+            flex-direction: column;
+            padding: 40px;
+            color: #fff;
+        }
+
+        h2 {
+            font-weight: 700;
+            color: #333;
         }
 
         .btn-primary {
@@ -52,74 +65,93 @@
             background: linear-gradient(90deg, #96c93d, #00b09b);
         }
 
-        h2 {
-            font-weight: 700;
-            color: #333;
+        canvas {
+            transition: all 0.3s ease-in-out;
+        }
+
+        select, input[type="color"] {
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-<div class="qr-container text-center">
-    <h2>QR Code Generator</h2>
-    <form id="qrForm" class="mt-4">
-        <div class="mb-3 text-start">
-            <label for="url" class="form-label">Linkni kiriting</label>
-            <input type="url" class="form-control" id="url" placeholder="https://example.com" required>
-        </div>
 
-        <div class="mb-3 text-start">
-            <label for="fgColor" class="form-label">QR Kod rangi (foreground)</label>
-            <input type="color" id="fgColor" class="form-control form-control-color" value="#000000">
-        </div>
+<div class="qr-wrapper">
+    <!-- Left side: form -->
+    <div class="qr-form">
+        <h2 class="mb-4 text-center">QR Code Generator</h2>
+        <form id="qrForm">
+            <div class="mb-3">
+                <label for="url" class="form-label">Enter your link</label>
+                <input type="url" class="form-control" id="url" placeholder="https://example.com" required>
+            </div>
 
-        <div class="mb-3 text-start">
-            <label for="bgColor" class="form-label">QR Kod background rangi</label>
-            <input type="color" id="bgColor" class="form-control form-control-color" value="#ffffff">
-        </div>
+            <div class="mb-3">
+                <label for="fgColor" class="form-label">QR Code Color</label>
+                <input type="color" id="fgColor" class="form-control form-control-color" value="#000000">
+            </div>
 
-        <button type="submit" class="btn btn-primary w-100 mt-2">QR Kodni Yaratish</button>
-    </form>
+            <div class="mb-3">
+                <label for="borderOption" class="form-label">Border Option</label>
+                <select id="borderOption" class="form-select">
+                    <option value="border">With Border</option>
+                    <option value="no-border">Without Border</option>
+                </select>
+            </div>
 
-    <div class="qr-preview" id="qrPreview" style="display:none;"></div>
-    <a href="#" class="btn btn-success mt-3 w-100" id="downloadBtn" style="display:none;">QR Kodni Yuklab Olish</a>
+            <button type="submit" class="btn btn-primary w-100 mt-2">Generate QR Code</button>
+        </form>
+    </div>
+
+    <!-- Right side: QR preview -->
+    <div class="qr-display">
+        <div id="qrPreview" class="p-3 rounded" style="background-color:#fff;"></div>
+        <a href="#" id="downloadBtn" class="btn btn-success mt-4 w-75" style="display:none;">Download QR Code</a>
+    </div>
 </div>
 
 <script>
     const qrForm = document.getElementById('qrForm');
     const qrPreview = document.getElementById('qrPreview');
     const downloadBtn = document.getElementById('downloadBtn');
+    const fgColorInput = document.getElementById('fgColor');
+    const borderOption = document.getElementById('borderOption');
+    const urlInput = document.getElementById('url');
 
-    qrForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+    function generateQR() {
+        const url = urlInput.value.trim();
+        if (!url) return;
 
-        const url = document.getElementById('url').value;
-        const fgColor = document.getElementById('fgColor').value;
-        const bgColor = document.getElementById('bgColor').value;
+        const fgColor = fgColorInput.value;
+        const border = borderOption.value === 'border' ? '10px solid #fff' : 'none';
 
-        qrPreview.innerHTML = ''; // eski QR kodni o'chirish
-        qrPreview.style.display = 'flex';
+        qrPreview.innerHTML = '';
+        qrPreview.style.border = border;
 
-        // QR kod yaratish
-        QRCode.toCanvas(url, { 
-            width: 250, 
-            margin: 2, 
+        QRCode.toCanvas(url, {
+            width: 240,
+            margin: 2,
             color: {
-                dark: fgColor, // QR kod foreground rangi
-                light: bgColor // QR kod background rangi
+                dark: fgColor,
+                light: "#ffffff"
             }
         }, function(err, canvas) {
-            if (err) {
-                console.error(err);
-                return;
-            }
+            if (err) return console.error(err);
             qrPreview.appendChild(canvas);
-
-            // download tugmasi
             downloadBtn.style.display = 'block';
             downloadBtn.href = canvas.toDataURL('image/png');
             downloadBtn.download = 'qr_code.png';
         });
+    }
+
+    qrForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        generateQR();
     });
+
+    fgColorInput.addEventListener('input', generateQR);
+    borderOption.addEventListener('change', generateQR);
 </script>
+
 </body>
 </html>
